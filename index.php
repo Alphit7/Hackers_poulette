@@ -11,7 +11,7 @@
 
 <body>
 
-    <form action="index.php" method="post">
+    <form action="index.php" method="post" enctype="multipart/form-data">
         <div class="Support__Request">
             <label for="namejfznfo">Name:</label>
             <input type="text" name="namejfznfo" id="namejfznfo" required maxlength="255">
@@ -42,18 +42,14 @@
                 placeholder="Your description here">
         </div>
     </form>
-    <script src="client-side-validation.js"></script>
 </body>
 
 <?php
-
-require 'assets/src/PHPMailer.php';
-
 if (isset($_POST["submit"])) {
     $name = $_POST["namejfznfo"];
     $lastname = $_POST["lastnameksxcins"];
     $email = $_POST["emailsklqds"];
-    $file = $_POST["filekdqsqo"];
+    $file = $_FILES["filekdqsqo"];
     $description = $_POST["descriptionpqcdq"];
 
     $filterName = filter_var($name, FILTER_SANITIZE_STRING);
@@ -75,29 +71,59 @@ if (isset($_POST["submit"])) {
     if (empty($filterDescritption)) {
         $errors[] = 'Description is required';
     }
-    if (!empty($_POST['name']) or !empty($_POST['lastname']) or !empty($_POST['email']) or !empty($_POST['file']) or !empty($_POST['description'])) {
+    if (!empty($_POST['name']) || !empty($_POST['lastname']) || !empty($_POST['email']) || !empty($_POST['description'])) {
         $errors[] = "Nice try bot";
-    }if(filesize($file) > 2097152){
-        echo '<p>This file is too big</p>';
+    }
+
+    if ($_FILES["filekdqsqo"]["error"] !== UPLOAD_ERR_NO_FILE) {
+        $file = $_FILES["filekdqsqo"];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+        $maxFileSize = 2 * 1024 * 1024; // 2MB
+
+        $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if (!in_array($fileExtension, $allowedExtensions)) {
+            $errors[] = 'Invalid file format. Allowed formats: ' . implode(', ', $allowedExtensions);
+        }
+
+        if ($file['size'] > $maxFileSize) {
+            $errors[] = 'File size exceeds the maximum limit of ' . ($maxFileSize / (1024 * 1024)) . 'MB';
+        }
+    }
+
+    if (empty($errors)) {
+        if ($_FILES["filekdqsqo"]["error"] !== UPLOAD_ERR_NO_FILE) {
+            $targetDir = 'uploads/';
+            $targetFile = $targetDir . basename($file['name']);
+
+            if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+                // File uploaded successfully
+            } else {
+                $errors[] = 'Failed to move uploaded file';
+            }
+        }
+
+        try {
+            $pdo = new PDO('mysql:host=localhost;dbname=Support;charset=utf8', 'root', '');
+            $query = 'INSERT INTO Form (name, lastname, email, file, description)
+                    VALUES ("' . $name . '","' . $lastname . '","' . $email . '","' . $file['name'] . '","' . $description . '");
+                    ';
+            $stmt = $pdo->query($query);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo "<span class='Support__Request__Validation'> Your request has been successfully sent !</span>";
+        } catch (Exception $e) {
+            die('Error: ' . $e->getMessage());
+        }
     }
 
     if (!empty($errors)) {
         foreach ($errors as $error) {
             echo '<p class="error">' . $error . '</p>';
         }
-    } else
-        try {
-            $pdo = new PDO('mysql:host=localhost;dbname=Support;charset=utf8', 'root', '');
-            $query = 'INSERT into Form (name,lastname,email,file,description)
-        values ("' . $name . '","' . $lastname . '","' . $email . '","' . $file . '","' . $description . '");
-        ';
-            $stmt = $pdo->query($query);
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo "<span class='Support__Request__Validation'> Your request has been successfully sent !</span>";
-        } catch (Exception $e) {
-            die('Erreur: ' . $e->getMessage());
-        }
+    }
 }
 ?>
+
+<script src="client-side-validation.js"></script>
 
 </html>
