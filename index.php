@@ -68,7 +68,7 @@ if (isset($_POST["submit"])) {
         ';
             $stmt = $pdo->query($query);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exeption $e) {
+        } catch (Exception $e) {
             die('Erreur: ' . $e->getMessage());
         }
 }
