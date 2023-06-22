@@ -45,6 +45,20 @@
 </body>
 
 <?php
+
+require 'assets/config/config.php';
+
+
+require 'PHPMailer-master/src/PHPMailer.php';
+require 'PHPMailer-master/src/SMTP.php';
+require 'PHPMailer-master/src/Exception.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+$mail = new PHPMailer(true);
+
 if (isset($_POST["submit"])) {
     $name = $_POST["namejfznfo"];
     $lastname = $_POST["lastnameksxcins"];
@@ -59,13 +73,13 @@ if (isset($_POST["submit"])) {
 
     $errors = [];
 
-    if (empty($filterName)) {
+    if (empty($filterName) or strlen($filterName) < 2) {
         $errors[] = 'Firstname is required';
     }
-    if (empty($filterLastname)) {
+    if (empty($filterLastname) or strlen($filterLastname) < 2) {
         $errors[] = 'Lastname is required';
     }
-    if (empty($filterEmail)) {
+    if (empty($filterEmail) or strlen($filterEmail) < 2) {
         $errors[] = 'Email is required';
     }
     if (empty($filterDescritption)) {
@@ -104,13 +118,40 @@ if (isset($_POST["submit"])) {
         }
 
         try {
-            $pdo = new PDO('mysql:host=localhost;dbname=Support;charset=utf8', 'root', '');
+            $pdo = new PDO('mysql:host=localhost;dbname=id20943645_support;charset=utf8', $dbUserName, $dbPassword);
             $query = 'INSERT INTO Form (name, lastname, email, file, description)
                     VALUES ("' . $name . '","' . $lastname . '","' . $email . '","' . $file['name'] . '","' . $description . '");
                     ';
             $stmt = $pdo->query($query);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
             echo "<span class='Support__Request__Validation'> Your request has been successfully sent !</span>";
+            try {
+                // SMTP configuration
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = $mailUsername;
+                $mail->Password = $mailPassword;
+                $mail->SMTPSecure = 'tls';
+                $mail->Port = 587;
+
+                // Sender and recipient
+                $mail->setFrom($mailUsername, 'Support');
+                $mail->addAddress($email, $name);
+
+                // Email content
+                $mail->Subject = 'Support';
+                $mail->Body = "It's finally working";
+
+                // Send the email
+                $mail->send();
+
+            } catch (Exception $e) {
+                echo 'Email could not be sent. Error: ', $mail->ErrorInfo;
+            }
+
         } catch (Exception $e) {
             die('Error: ' . $e->getMessage());
         }
