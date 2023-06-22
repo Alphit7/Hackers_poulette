@@ -25,4 +25,4 @@ The request is sent to a database
 
 
 
-![App Screenshot](assets/Capture d’écran du 2023-06-22 09-03-07.png)# Hackers_poulette
+![App Screenshot](assets/Screenshot_Poulette.png)
