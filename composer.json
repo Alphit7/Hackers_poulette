@@ -1,7 +1,0 @@
-{
-    "require": {
-        "symfony/symfony": "^3.3",
-        "symfony/event-dispatcher": "^5.4|^6.0",
-    "symfony/mailer": "^6.3"
-    }
-}
